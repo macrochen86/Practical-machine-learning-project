@@ -18,15 +18,9 @@ output: html_document
 
 
 ```{r barbell_lift_analysis, echo=TRUE, include=TRUE, cache=TRUE}
-library(caret)
-library(AppliedPredictiveModeling)
 library(knitr)
 library(dplyr)
 library(rpart)
-library(rpart.plot)
-library(rattle)
-library(randomForest)
-library(gbm)
 
 data1 = read.csv("~/Course 8/Practical-machine-learning-project/pml-training.csv")
 data2 = read.csv("~/Course 8/Practical-machine-learning-project/pml-testing.csv")
@@ -107,3 +101,6 @@ dim(data2)
 pred_final <- predict(mod_rf, data2)
 pred_final
 ```
+
+## Final anylysis
+## Although rf has the most accuracy predicton method, it is also the longest time to run wiht most resources required (7 min in this case compared with other 2 methods(lda and rpart around 15s). It will have bigger impact when data source is much bigger.
