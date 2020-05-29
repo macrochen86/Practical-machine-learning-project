@@ -26,6 +26,7 @@ library(rpart)
 library(rpart.plot)
 library(rattle)
 library(randomForest)
+library(gbm)
 
 data1 = read.csv("~/Course 8/Practical-machine-learning-project/pml-training.csv")
 data2 = read.csv("~/Course 8/Practical-machine-learning-project/pml-testing.csv")
@@ -51,7 +52,7 @@ testing  <- testing[, AllNA==FALSE]
 
 ## Further remove identification only variables (columns 1 to 7), resulting in 52 predictors only 
 training <- training[, -(1:7)]
-TestSet  <- testing[, -(1:7)]
+testing  <- testing[, -(1:7)]
 dim(training)
 
 ## Model Building will include fist Linear Discriminant Analysis (LDA), then non-linea indluding random forest (rf),  gradient boosting method (gbm), but I will implement cross-validation to avoid over-fitting first 
@@ -80,11 +81,12 @@ end1 <- Sys.time()
 time_lda <- end1 - start1 
 time_lda
 mod_lda
-plot(mod_lda)
+
 
 pred_rf <- predict(mod_rf, testing)
 pred_rpart <- predict(mod_rpart, testing)
 pred_lda <- predict(mod_lda, testing)
+#pred_gbm <- predict(mod_gbm, testing)
 
 #predDF <- data.frame(pred_rf, pred_gbm, pred_lda, diagnosis = testing$classe)
 #combModFit <- train(classe ~ ., method = "rf", data = predDF)
@@ -93,6 +95,7 @@ pred_lda <- predict(mod_lda, testing)
 confusionMatrix(pred_rf, testing$classe)$overall[1]
 confusionMatrix(pred_rpart, testing$classe)$overall[1]
 confusionMatrix(pred_lda, testing$classe)$overall[1]
+#confusionMatrix(pred_gbm, testing$classe)$overall[1]
 #confusionMatrix(combPred, testing$classe)$overall[1]
 
 ## Analysis
