@@ -1,0 +1,106 @@
+---
+title: "Course Project"
+author: "Hong Chen"
+date: "5/28/2020"
+output: html_document
+---
+
+## Background
+## In this project, our goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+##The training data for this project are available here:
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+## The test data are available here:
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+##The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+
+
+```{r barbell_lift_analysis, echo=TRUE, include=TRUE, cache=TRUE}
+library(caret)
+library(AppliedPredictiveModeling)
+library(knitr)
+library(dplyr)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(randomForest)
+
+data1 = read.csv("~/Course 8/Practical-machine-learning-project/pml-training.csv")
+data2 = read.csv("~/Course 8/Practical-machine-learning-project/pml-testing.csv")
+##dim(data1)
+##dim(data2)
+
+## Diving original training set(19622 in total) to trainig (75%) and testing (25%)
+inTrain = createDataPartition(data1$classe, p = 3/4)[[1]]
+training = data1[ inTrain,]
+testing = data1[-inTrain,]
+
+## Both datasets have 160 variables. will remove Near Zero variance (NZV) variables, resulting in 102 predictors after processing 
+NZV <- nearZeroVar(training)
+training <- training[, -NZV]
+testing  <- testing[, -NZV]
+## dim(training)
+
+## Furhter reducne # of predictors by removing variables that are mostly NA, resulting in 59 predictors left
+AllNA    <- sapply(training, function(x) mean(is.na(x))) > 0.95
+training <- training[, AllNA==FALSE]
+testing  <- testing[, AllNA==FALSE]
+## dim(training)
+
+## Further remove identification only variables (columns 1 to 7), resulting in 52 predictors only 
+training <- training[, -(1:7)]
+TestSet  <- testing[, -(1:7)]
+dim(training)
+
+## Model Building will include fist Linear Discriminant Analysis (LDA), then non-linea indluding random forest (rf),  gradient boosting method (gbm), but I will implement cross-validation to avoid over-fitting first 
+set.seed(12345)
+fitControl <- trainControl(method='cv', number = 3)
+
+start1 <- Sys.time()  
+mod_rpart <- train(classe ~ ., data = training, method = "rpart")
+end1 <- Sys.time()   
+time_rpart <- end1 - start1
+mod_rpart
+time_rpart
+fancyRpartPlot(mod_rpart$finalModel)
+
+start1 <- Sys.time() 
+mod_rf <- train(classe ~ ., data = training, method = "rf",trControl=fitControl, VERBOSE=FALSE)
+end1 <- Sys.time()   
+time_rf <- end1 - start1 
+mod_rf
+time_rf
+plot(mod_rf,main="RF Model Accuracy by number of predictors")
+
+start1 <- Sys.time() 
+mod_lda <- train(classe ~ ., data = training, method = "lda")
+end1 <- Sys.time()   
+time_lda <- end1 - start1 
+time_lda
+mod_lda
+plot(mod_lda)
+
+pred_rf <- predict(mod_rf, testing)
+pred_rpart <- predict(mod_rpart, testing)
+pred_lda <- predict(mod_lda, testing)
+
+#predDF <- data.frame(pred_rf, pred_gbm, pred_lda, diagnosis = testing$classe)
+#combModFit <- train(classe ~ ., method = "rf", data = predDF)
+#combPred <- predict(combModFit, predDF)
+
+confusionMatrix(pred_rf, testing$classe)$overall[1]
+confusionMatrix(pred_rpart, testing$classe)$overall[1]
+confusionMatrix(pred_lda, testing$classe)$overall[1]
+#confusionMatrix(combPred, testing$classe)$overall[1]
+
+## Analysis
+## It seems randon forrest has achieved close to 99% accuracy in both trainnig and test dataset. we will use this as final model for downloaded test dataset, otherwise we could try to use model combination to increase accuracy when needed
+data2  <- data2[, -NZV]
+data2  <- data2[, AllNA==FALSE]
+data2  <- data2[, -(1:7)]
+dim(data2)
+pred_final <- predict(mod_rf, data2)
+pred_final
+```
